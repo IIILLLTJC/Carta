@@ -2,9 +2,9 @@
   <section class="dashboard-grid user-dashboard-grid">
     <article class="hero-panel user-hero">
       <p class="page-kicker">User Portal</p>
-      <h3>用户端基础入口已准备完成</h3>
+      <h3>用户端真实业务已开始落地</h3>
       <p>
-        当前可通过登录页进入用户端，后续将逐步接入投放点查询、下单、订单管理和归还流程。
+        当前阶段会逐步打通车辆投放地点、我的订单、归还申请和个人中心，让用户端能够基于当前登录用户独立完成查看和操作。
       </p>
     </article>
 
@@ -20,12 +20,12 @@
 
     <article class="module-card">
       <div class="module-card__head">
-        <h3>下一步落点</h3>
+        <h3>当前进度</h3>
       </div>
       <ul class="tip-list">
-        <li>先打通车辆列表与区域可视化查询。</li>
-        <li>再实现用户下单、订单详情、归还申请。</li>
-        <li>最后串联管理端审核与费用结算。</li>
+        <li>先完成投放地点浏览，确认用户可以看到可租车辆。</li>
+        <li>再接我的订单，让 user01 只看到自己的订单记录。</li>
+        <li>随后接归还申请和个人中心资料维护。</li>
       </ul>
     </article>
   </section>

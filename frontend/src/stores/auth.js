@@ -19,6 +19,10 @@ export const useAuthStore = defineStore('auth', {
       localStorage.setItem('cartaxi-display-name', data.displayName)
       return data
     },
+    setDisplayName(displayName) {
+      this.displayName = displayName
+      localStorage.setItem('cartaxi-display-name', displayName)
+    },
     logout() {
       this.token = ''
       this.role = ''

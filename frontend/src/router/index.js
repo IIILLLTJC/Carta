@@ -7,7 +7,15 @@ import AdminHomeView from '@/views/admin/AdminHomeView.vue'
 import RegionManageView from '@/views/admin/RegionManageView.vue'
 import UserManageView from '@/views/admin/UserManageView.vue'
 import CarManageView from '@/views/admin/CarManageView.vue'
+import DeployManageView from '@/views/admin/DeployManageView.vue'
+import OrderCenterView from '@/views/admin/OrderCenterView.vue'
+import ReturnManageView from '@/views/admin/ReturnManageView.vue'
+import RecoveryManageView from '@/views/admin/RecoveryManageView.vue'
 import UserHomeView from '@/views/user/UserHomeView.vue'
+import UserPointView from '@/views/user/UserPointView.vue'
+import UserOrderView from '@/views/user/UserOrderView.vue'
+import UserReturnView from '@/views/user/UserReturnView.vue'
+import UserProfileView from '@/views/user/UserProfileView.vue'
 import ModulePlaceholder from '@/views/shared/ModulePlaceholder.vue'
 
 const adminChildren = [
@@ -16,8 +24,12 @@ const adminChildren = [
   { path: 'regions', component: RegionManageView, meta: { requiresAuth: true, roles: ['ADMIN', 'SUPER_ADMIN'] } },
   { path: 'cars', component: CarManageView, meta: { requiresAuth: true, roles: ['ADMIN', 'SUPER_ADMIN'] } },
   { path: 'users', component: UserManageView, meta: { requiresAuth: true, roles: ['ADMIN', 'SUPER_ADMIN'] } },
+  { path: 'deploy', component: DeployManageView, meta: { requiresAuth: true, roles: ['ADMIN', 'SUPER_ADMIN'] } },
+  { path: 'orders', component: OrderCenterView, meta: { requiresAuth: true, roles: ['ADMIN', 'SUPER_ADMIN'] } },
+  { path: 'returns', component: ReturnManageView, meta: { requiresAuth: true, roles: ['ADMIN', 'SUPER_ADMIN'] } },
+  { path: 'recovery', component: RecoveryManageView, meta: { requiresAuth: true, roles: ['ADMIN', 'SUPER_ADMIN'] } },
   ...adminMenus
-    .filter((item) => !['/admin/home', '/admin/regions', '/admin/cars', '/admin/users'].includes(item.path))
+    .filter((item) => !['/admin/home', '/admin/regions', '/admin/cars', '/admin/users', '/admin/deploy', '/admin/orders', '/admin/returns', '/admin/recovery'].includes(item.path))
     .map((item) => ({
       path: item.path.replace('/admin/', ''),
       component: ModulePlaceholder,
@@ -33,18 +45,10 @@ const adminChildren = [
 const userChildren = [
   { path: '', redirect: '/user/home' },
   { path: 'home', component: UserHomeView, meta: { requiresAuth: true, roles: ['USER'] } },
-  ...userMenus
-    .filter((item) => item.path !== '/user/home')
-    .map((item) => ({
-      path: item.path.replace('/user/', ''),
-      component: ModulePlaceholder,
-      props: {
-        title: item.title,
-        description: item.description,
-        roleLabel: '用户端'
-      },
-      meta: { requiresAuth: true, roles: ['USER'] }
-    }))
+  { path: 'points', component: UserPointView, meta: { requiresAuth: true, roles: ['USER'] } },
+  { path: 'orders', component: UserOrderView, meta: { requiresAuth: true, roles: ['USER'] } },
+  { path: 'returns', component: UserReturnView, meta: { requiresAuth: true, roles: ['USER'] } },
+  { path: 'profile', component: UserProfileView, meta: { requiresAuth: true, roles: ['USER'] } }
 ]
 
 const router = createRouter({

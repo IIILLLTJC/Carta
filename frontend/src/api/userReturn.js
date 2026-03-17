@@ -1,31 +1,17 @@
-import request from '../utils/request'
+import request from '@/utils/request'
 
 export function fetchUserReturnPage(params) {
-  return request({
-    url: '/user/returns',
-    method: 'get',
-    params,
-  })
+  return request.get('/api/user/returns', { params })
 }
 
 export function fetchUserReturnDetail(id) {
-  return request({
-    url: `/user/returns/${id}`,
-    method: 'get',
-  })
+  return request.get(`/api/user/returns/${id}`)
 }
 
 export function fetchUserReturnFormOptions() {
-  return request({
-    url: '/user/returns/form-options',
-    method: 'get',
-  })
+  return request.get('/api/user/returns/form-options')
 }
 
 export function createUserReturn(data) {
-  return request({
-    url: '/user/returns',
-    method: 'post',
-    data,
-  })
+  return request.post('/api/user/returns', data)
 }

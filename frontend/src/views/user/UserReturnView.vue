@@ -3,50 +3,50 @@
     <div class="module-card__head">
       <div>
         <p class="page-kicker">User Returns</p>
-        <h3>????</h3>
+        <h3>归还管理</h3>
       </div>
-      <el-button type="primary" @click="openCreateDialog">??????</el-button>
+      <el-button type="primary" @click="openCreateDialog">提交归还申请</el-button>
     </div>
 
     <el-form :inline="true" :model="queryForm" class="search-form">
-      <el-form-item label="???">
-        <el-input v-model="queryForm.orderNo" placeholder="?????" clearable />
+      <el-form-item label="订单号">
+        <el-input v-model="queryForm.orderNo" placeholder="请输入订单号" clearable />
       </el-form-item>
-      <el-form-item label="????">
-        <el-select v-model="queryForm.status" placeholder="????" clearable style="width: 160px">
+      <el-form-item label="归还状态">
+        <el-select v-model="queryForm.status" placeholder="全部状态" clearable style="width: 160px">
           <el-option v-for="item in returnStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="handleSearch">??</el-button>
-        <el-button @click="handleReset">??</el-button>
+        <el-button type="primary" @click="handleSearch">查询</el-button>
+        <el-button @click="handleReset">重置</el-button>
       </el-form-item>
     </el-form>
 
-    <el-table :data="tableData" stripe>
-      <el-table-column prop="orderNo" label="???" min-width="180" />
-      <el-table-column label="????" min-width="220">
+    <el-table v-loading="loading" :data="tableData" stripe>
+      <el-table-column prop="orderNo" label="订单号" min-width="180" />
+      <el-table-column label="车辆信息" min-width="220">
         <template #default="scope">
           <div>{{ scope.row.carCode || '-' }}</div>
           <div class="table-sub-copy">{{ scope.row.licensePlate || '-' }} / {{ scope.row.brand || '-' }} {{ scope.row.model || '' }}</div>
         </template>
       </el-table-column>
-      <el-table-column prop="returnRegionName" label="????" min-width="140" />
-      <el-table-column prop="vehicleCondition" label="????" min-width="140" />
-      <el-table-column label="????" min-width="180">
+      <el-table-column prop="returnRegionName" label="归还区域" min-width="140" />
+      <el-table-column prop="vehicleCondition" label="自报情况" min-width="160" />
+      <el-table-column label="费用结算" min-width="180">
         <template #default="scope">
-          <div>??: {{ formatMoney(scope.row.damageCost) }}</div>
-          <div>??: {{ formatMoney(scope.row.lateFee) }}</div>
-          <div>??: {{ formatMoney(scope.row.finalAmount) }}</div>
+          <div>损坏: {{ formatMoney(scope.row.damageCost) }}</div>
+          <div>逾期: {{ formatMoney(scope.row.lateFee) }}</div>
+          <div>结算: {{ formatMoney(scope.row.finalAmount) }}</div>
         </template>
       </el-table-column>
-      <el-table-column label="??" min-width="120">
+      <el-table-column label="状态" min-width="120">
         <template #default="scope">
           <el-tag :type="statusTagType(scope.row.status)">{{ statusLabel(scope.row.status) }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="returnTime" label="????" min-width="180" />
-      <el-table-column label="??" min-width="180">
+      <el-table-column prop="returnTime" label="归还时间" min-width="180" />
+      <el-table-column label="备注" min-width="180">
         <template #default="scope">{{ scope.row.remark || '-' }}</template>
       </el-table-column>
     </el-table>
@@ -62,10 +62,10 @@
       />
     </div>
 
-    <el-dialog v-model="dialogVisible" title="??????" width="640px" destroy-on-close>
-      <el-form ref="formRef" :model="formModel" :rules="rules" label-width="110px">
-        <el-form-item label="?????" prop="rentalOrderId">
-          <el-select v-model="formModel.rentalOrderId" placeholder="?????" filterable style="width: 100%" @change="handleOrderChange">
+    <el-dialog v-model="dialogVisible" title="提交归还申请" width="640px" destroy-on-close>
+      <el-form ref="formRef" :model="formModel" :rules="rules" label-width="130px">
+        <el-form-item label="租赁订单" prop="rentalOrderId">
+          <el-select v-model="formModel.rentalOrderId" placeholder="请选择租赁订单" filterable style="width: 100%" @change="handleOrderChange">
             <el-option
               v-for="item in orderOptions"
               :key="item.id"
@@ -74,33 +74,33 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="????" prop="returnRegionId">
-          <el-select v-model="formModel.returnRegionId" placeholder="???????" filterable style="width: 100%">
+        <el-form-item label="归还区域" prop="returnRegionId">
+          <el-select v-model="formModel.returnRegionId" placeholder="请选择归还区域" filterable style="width: 100%">
             <el-option v-for="item in regionOptions" :key="item.id" :label="`${item.regionName} (${item.regionCode})`" :value="item.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="????" prop="vehicleCondition">
-          <el-select v-model="formModel.vehicleCondition" placeholder="???????" style="width: 100%">
-            <el-option label="??" value="??" />
-            <el-option label="????" value="????" />
-            <el-option label="????" value="????" />
+        <el-form-item label="车辆自报情况" prop="vehicleCondition">
+          <el-select v-model="formModel.vehicleCondition" placeholder="请选择车辆自报情况" style="width: 100%">
+            <el-option label="无明显异常" value="无明显异常" />
+            <el-option label="轻微异常，待验车确认" value="轻微异常，待验车确认" />
+            <el-option label="存在明显异常，待验车确认" value="存在明显异常，待验车确认" />
           </el-select>
         </el-form-item>
-        <el-form-item label="????">
+        <el-form-item label="订单信息">
           <div class="dialog-tip" v-if="selectedOrder">
-            <div>???{{ selectedOrder.carCode || '-' }} / {{ selectedOrder.licensePlate || '-' }}</div>
-            <div>????{{ selectedOrder.pickupRegionName || '-' }}</div>
-            <div>?????{{ selectedOrder.expectedReturnTime || '-' }}</div>
+            <div>车辆：{{ selectedOrder.carCode || '-' }} / {{ selectedOrder.licensePlate || '-' }}</div>
+            <div>取车区域：{{ selectedOrder.pickupRegionName || '-' }}</div>
+            <div>预计归还时间：{{ selectedOrder.expectedReturnTime || '-' }}</div>
           </div>
-          <span v-else class="table-sub-copy">????????</span>
+          <span v-else class="table-sub-copy">请选择订单后查看关联信息</span>
         </el-form-item>
-        <el-form-item label="??">
-          <el-input v-model="formModel.remark" type="textarea" :rows="3" maxlength="200" show-word-limit placeholder="????????????" />
+        <el-form-item label="异常说明 / 备注">
+          <el-input v-model="formModel.remark" type="textarea" :rows="3" maxlength="200" show-word-limit placeholder="请输入用户自报的异常说明或归还备注" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">??</el-button>
-        <el-button type="primary" :loading="submitLoading" @click="handleSubmit">????</el-button>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="submitLoading" @click="handleSubmit">提交归还</el-button>
       </template>
     </el-dialog>
   </section>
@@ -112,10 +112,10 @@ import { ElMessage } from 'element-plus'
 import { createUserReturn, fetchUserReturnFormOptions, fetchUserReturnPage } from '../../api/userReturn'
 
 const returnStatusOptions = [
-  { label: '???', value: 'PENDING' },
-  { label: '???', value: 'CONFIRMED' },
-  { label: '???', value: 'SETTLED' },
-  { label: '???', value: 'COMPLETED' },
+  { label: '待确认', value: 'PENDING' },
+  { label: '已确认', value: 'CONFIRMED' },
+  { label: '已结算', value: 'SETTLED' },
+  { label: '已完成', value: 'COMPLETED' },
 ]
 
 const queryForm = reactive({
@@ -145,9 +145,9 @@ const formModel = reactive({
 })
 
 const rules = {
-  rentalOrderId: [{ required: true, message: '?????', trigger: 'change' }],
-  returnRegionId: [{ required: true, message: '???????', trigger: 'change' }],
-  vehicleCondition: [{ required: true, message: '???????', trigger: 'change' }],
+  rentalOrderId: [{ required: true, message: '请选择租赁订单', trigger: 'change' }],
+  returnRegionId: [{ required: true, message: '请选择归还区域', trigger: 'change' }],
+  vehicleCondition: [{ required: true, message: '请选择车辆自报情况', trigger: 'change' }],
 }
 
 const selectedOrder = computed(() => orderOptions.value.find((item) => item.id === formModel.rentalOrderId))
@@ -155,33 +155,39 @@ const selectedOrder = computed(() => orderOptions.value.find((item) => item.id =
 async function loadData() {
   loading.value = true
   try {
-    const { data } = await fetchUserReturnPage({
+    const { data: pageData } = await fetchUserReturnPage({
       pageNum: pagination.pageNum,
       pageSize: pagination.pageSize,
       ...queryForm,
     })
-    const pageData = data?.data || {}
-    tableData.value = pageData.records || []
-    pagination.total = Number(pageData.total || 0)
-    pagination.pageNum = Number(pageData.pageNum || pagination.pageNum)
-    pagination.pageSize = Number(pageData.pageSize || pagination.pageSize)
+    tableData.value = pageData?.records || []
+    pagination.total = Number(pageData?.total || 0)
+    pagination.pageNum = Number(pageData?.pageNum || pagination.pageNum)
+    pagination.pageSize = Number(pageData?.pageSize || pagination.pageSize)
+  } catch (error) {
+    ElMessage.error(error.message || '归还记录加载失败')
   } finally {
     loading.value = false
   }
 }
 
 async function loadFormOptions() {
-  const { data } = await fetchUserReturnFormOptions()
-  const payload = data?.data || {}
-  orderOptions.value = payload.orders || []
-  regionOptions.value = payload.regions || []
+  const { data: payload } = await fetchUserReturnFormOptions()
+  orderOptions.value = payload?.orders || []
+  regionOptions.value = payload?.regions || []
 }
 
-function openCreateDialog() {
-  loadFormOptions().then(() => {
-    dialogVisible.value = true
+async function openCreateDialog() {
+  try {
+    await loadFormOptions()
     resetForm()
-  })
+    dialogVisible.value = true
+    if (!orderOptions.value.length) {
+      ElMessage.warning('当前没有可归还订单')
+    }
+  } catch (error) {
+    ElMessage.error(error.message || '归还表单选项加载失败')
+  }
 }
 
 function handleOrderChange(orderId) {
@@ -223,9 +229,11 @@ async function handleSubmit() {
   submitLoading.value = true
   try {
     await createUserReturn({ ...formModel })
-    ElMessage.success('???????')
+    ElMessage.success('归还申请提交成功')
     dialogVisible.value = false
     await Promise.all([loadData(), loadFormOptions()])
+  } catch (error) {
+    ElMessage.error(error.message || '归还申请提交失败')
   } finally {
     submitLoading.value = false
   }
@@ -244,13 +252,16 @@ function statusTagType(status) {
 
 function formatMoney(value) {
   if (value === null || value === undefined || value === '') {
-    return '?0.00'
+    return '￥0.00'
   }
-  return `?${Number(value).toFixed(2)}`
+  return `￥${Number(value).toFixed(2)}`
 }
 
 onMounted(() => {
   loadData()
-  loadFormOptions()
+  loadFormOptions().catch(() => {
+    orderOptions.value = []
+    regionOptions.value = []
+  })
 })
 </script>

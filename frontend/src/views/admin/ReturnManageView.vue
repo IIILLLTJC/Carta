@@ -90,7 +90,7 @@
     </div>
 
     <el-dialog v-model="dialog.visible" :title="dialog.mode === 'create' ? '新增归还记录' : '编辑归还记录'" width="860px">
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
         <div class="form-grid">
           <el-form-item label="订单" prop="rentalOrderId" class="full-row">
             <el-select v-model="form.rentalOrderId" placeholder="请选择订单" filterable style="width: 100%">
@@ -115,8 +115,8 @@
               <el-option v-for="item in returnStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </el-form-item>
-          <el-form-item label="车辆状况" class="full-row">
-            <el-input v-model="form.vehicleCondition" placeholder="请输入车辆状况说明" />
+          <el-form-item label="验车结论" class="full-row">
+            <el-input v-model="form.vehicleCondition" placeholder="正常完成可填写“无明显异常”；异常完成请填写“验车确认：xxx异常/需维修”" />
           </el-form-item>
           <el-form-item label="损坏费用" prop="damageCost">
             <el-input-number v-model="form.damageCost" :min="0" :precision="2" controls-position="right" style="width: 100%" />

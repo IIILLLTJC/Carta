@@ -148,22 +148,22 @@ public class UserReturnServiceImpl implements UserReturnService {
         ensureCurrentUserExists(userId);
         RentalOrder order = getOwnedOrderOrThrow(createDTO.getRentalOrderId(), userId);
         if (!AVAILABLE_ORDER_STATUS.contains(order.getOrderStatus())) {
-            throw new BusinessException(400, "?????????????");
+            throw new BusinessException(400, "当前订单状态不允许发起归还申请");
         }
         ReturnRecord existed = returnRecordMapper.selectOne(new LambdaQueryWrapper<ReturnRecord>()
                 .eq(ReturnRecord::getRentalOrderId, order.getId()));
         if (existed != null) {
-            throw new BusinessException(409, "??????????");
+            throw new BusinessException(409, "该订单已提交过归还申请");
         }
 
         Region region = regionMapper.selectById(createDTO.getReturnRegionId());
         if (region == null || !Objects.equals(region.getStatus(), 1)) {
-            throw new BusinessException(400, "???????????");
+            throw new BusinessException(400, "归还区域不存在或不可用");
         }
 
         CarInfo car = carInfoMapper.selectById(order.getCarId());
         if (car == null) {
-            throw new BusinessException(404, "?????");
+            throw new BusinessException(404, "车辆不存在");
         }
 
         ReturnRecord record = new ReturnRecord();
@@ -191,14 +191,14 @@ public class UserReturnServiceImpl implements UserReturnService {
 
     private Long currentUserId() {
         if (UserContext.get() == null || UserContext.get().getUserId() == null) {
-            throw new BusinessException(401, "???????????");
+            throw new BusinessException(401, "当前用户未登录");
         }
         return UserContext.get().getUserId();
     }
 
     private void ensureCurrentUserExists(Long userId) {
         if (sysUserMapper.selectById(userId) == null) {
-            throw new BusinessException(404, "???????");
+            throw new BusinessException(404, "用户不存在");
         }
     }
 
@@ -207,7 +207,7 @@ public class UserReturnServiceImpl implements UserReturnService {
                 .eq(RentalOrder::getId, orderId)
                 .eq(RentalOrder::getUserId, userId));
         if (order == null) {
-            throw new BusinessException(404, "?????");
+            throw new BusinessException(404, "订单不存在");
         }
         return order;
     }
@@ -215,7 +215,7 @@ public class UserReturnServiceImpl implements UserReturnService {
     private ReturnRecord getOwnedRecordOrThrow(Long id) {
         ReturnRecord record = returnRecordMapper.selectById(id);
         if (record == null || !Objects.equals(record.getUserId(), currentUserId())) {
-            throw new BusinessException(404, "???????");
+            throw new BusinessException(404, "归还记录不存在");
         }
         return record;
     }

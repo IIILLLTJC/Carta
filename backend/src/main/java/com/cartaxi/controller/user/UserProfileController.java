@@ -25,11 +25,11 @@ public class UserProfileController {
 
     @GetMapping
     public ApiResponse<UserProfileVO> profile() {
-        return ApiResponse.success("????", userProfileService.getCurrentProfile());
+        return ApiResponse.success("查询成功", userProfileService.getCurrentProfile());
     }
 
     @PutMapping
     public ApiResponse<UserProfileVO> update(@Valid @RequestBody UserProfileUpdateDTO updateDTO) {
-        return ApiResponse.success("????", userProfileService.updateCurrentProfile(updateDTO));
+        return ApiResponse.success("更新成功", userProfileService.updateCurrentProfile(updateDTO));
     }
 }

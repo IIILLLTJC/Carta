@@ -1,9 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { adminMenus, userMenus } from '@/constants/menus'
+import { adminMenus } from '@/constants/menus'
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import UserLayout from '@/layouts/UserLayout.vue'
 import LoginView from '@/views/LoginView.vue'
 import AdminHomeView from '@/views/admin/AdminHomeView.vue'
+import AdminManageView from '@/views/admin/AdminManageView.vue'
+import AdminProfileView from '@/views/admin/AdminProfileView.vue'
 import RegionManageView from '@/views/admin/RegionManageView.vue'
 import UserManageView from '@/views/admin/UserManageView.vue'
 import CarManageView from '@/views/admin/CarManageView.vue'
@@ -18,9 +20,23 @@ import UserReturnView from '@/views/user/UserReturnView.vue'
 import UserProfileView from '@/views/user/UserProfileView.vue'
 import ModulePlaceholder from '@/views/shared/ModulePlaceholder.vue'
 
+const builtInAdminRoutes = [
+  '/admin/home',
+  '/admin/profile',
+  '/admin/users',
+  '/admin/regions',
+  '/admin/cars',
+  '/admin/deploy',
+  '/admin/orders',
+  '/admin/returns',
+  '/admin/recovery',
+  '/admin/admins'
+]
+
 const adminChildren = [
   { path: '', redirect: '/admin/home' },
   { path: 'home', component: AdminHomeView, meta: { requiresAuth: true, roles: ['ADMIN', 'SUPER_ADMIN'] } },
+  { path: 'profile', component: AdminProfileView, meta: { requiresAuth: true, roles: ['ADMIN', 'SUPER_ADMIN'] } },
   { path: 'regions', component: RegionManageView, meta: { requiresAuth: true, roles: ['ADMIN', 'SUPER_ADMIN'] } },
   { path: 'cars', component: CarManageView, meta: { requiresAuth: true, roles: ['ADMIN', 'SUPER_ADMIN'] } },
   { path: 'users', component: UserManageView, meta: { requiresAuth: true, roles: ['ADMIN', 'SUPER_ADMIN'] } },
@@ -28,8 +44,9 @@ const adminChildren = [
   { path: 'orders', component: OrderCenterView, meta: { requiresAuth: true, roles: ['ADMIN', 'SUPER_ADMIN'] } },
   { path: 'returns', component: ReturnManageView, meta: { requiresAuth: true, roles: ['ADMIN', 'SUPER_ADMIN'] } },
   { path: 'recovery', component: RecoveryManageView, meta: { requiresAuth: true, roles: ['ADMIN', 'SUPER_ADMIN'] } },
+  { path: 'admins', component: AdminManageView, meta: { requiresAuth: true, roles: ['ADMIN', 'SUPER_ADMIN'] } },
   ...adminMenus
-    .filter((item) => !['/admin/home', '/admin/regions', '/admin/cars', '/admin/users', '/admin/deploy', '/admin/orders', '/admin/returns', '/admin/recovery'].includes(item.path))
+    .filter((item) => !builtInAdminRoutes.includes(item.path))
     .map((item) => ({
       path: item.path.replace('/admin/', ''),
       component: ModulePlaceholder,

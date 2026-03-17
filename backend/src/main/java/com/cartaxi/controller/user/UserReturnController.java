@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -30,22 +29,22 @@ public class UserReturnController {
 
     @GetMapping
     public ApiResponse<PageResult<UserReturnVO>> page(UserReturnQueryDTO queryDTO) {
-        return ApiResponse.success("????", userReturnService.page(queryDTO));
+        return ApiResponse.success("查询成功", userReturnService.page(queryDTO));
     }
 
     @GetMapping("/{id}")
     public ApiResponse<UserReturnVO> detail(@PathVariable Long id) {
-        return ApiResponse.success("????", userReturnService.detail(id));
+        return ApiResponse.success("查询成功", userReturnService.detail(id));
     }
 
     @GetMapping("/form-options")
     public ApiResponse<UserReturnFormOptionsVO> formOptions() {
-        return ApiResponse.success("????", userReturnService.formOptions());
+        return ApiResponse.success("查询成功", userReturnService.formOptions());
     }
 
     @PostMapping
     public ApiResponse<Void> create(@Valid @RequestBody UserReturnCreateDTO createDTO) {
         userReturnService.create(createDTO);
-        return ApiResponse.success("???????", null);
+        return ApiResponse.success("归还申请提交成功", null);
     }
 }

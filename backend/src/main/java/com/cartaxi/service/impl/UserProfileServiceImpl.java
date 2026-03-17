@@ -38,11 +38,11 @@ public class UserProfileServiceImpl implements UserProfileService {
 
     private SysUser getCurrentUser() {
         if (UserContext.get() == null || UserContext.get().getUserId() == null) {
-            throw new BusinessException(401, "???????????");
+            throw new BusinessException(401, "当前用户未登录");
         }
         SysUser user = sysUserMapper.selectById(UserContext.get().getUserId());
         if (user == null) {
-            throw new BusinessException(404, "???????");
+            throw new BusinessException(404, "用户不存在");
         }
         return user;
     }

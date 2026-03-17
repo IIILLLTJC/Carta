@@ -224,13 +224,38 @@ public class AdminReturnRecordServiceImpl implements AdminReturnRecordService {
             case "SETTLED", "COMPLETED" -> {
                 order.setOrderStatus("COMPLETED");
                 car.setCurrentRegionId(record.getReturnRegionId());
-                car.setStatus("DEPLOYED");
+                car.setStatus(hasConfirmedVehicleException(record.getVehicleCondition()) ? "MAINTENANCE" : "DEPLOYED");
             }
             default -> {
             }
         }
         rentalOrderMapper.updateById(order);
         carInfoMapper.updateById(car);
+    }
+
+    private boolean hasConfirmedVehicleException(String vehicleCondition) {
+        if (!StringUtils.hasText(vehicleCondition)) {
+            return false;
+        }
+        String normalized = vehicleCondition.trim();
+        if (normalized.contains("待验车确认")) {
+            return false;
+        }
+        if (normalized.contains("无明显异常") || normalized.contains("正常") || normalized.contains("良好") || normalized.contains("可直接投放")) {
+            return false;
+        }
+        boolean abnormal = normalized.contains("异常")
+                || normalized.contains("损坏")
+                || normalized.contains("剐蹭")
+                || normalized.contains("故障")
+                || normalized.contains("维修")
+                || normalized.contains("破损");
+        boolean confirmed = normalized.contains("确认")
+                || normalized.contains("验车")
+                || normalized.contains("复核")
+                || normalized.contains("需维修")
+                || normalized.contains("维修中");
+        return abnormal && confirmed;
     }
 
     private List<ReturnRecordVO> enrich(List<ReturnRecord> records) {
@@ -245,8 +270,14 @@ public class AdminReturnRecordServiceImpl implements AdminReturnRecordService {
                 .stream().collect(Collectors.toMap(SysUser::getId, item -> item));
         Map<Long, Region> regionMap = regionMapper.selectBatchIds(records.stream().map(ReturnRecord::getReturnRegionId).filter(Objects::nonNull).distinct().toList())
                 .stream().collect(Collectors.toMap(Region::getId, item -> item));
-        Map<Long, SysAdmin> adminMap = sysAdminMapper.selectBatchIds(records.stream().map(ReturnRecord::getProcessedBy).filter(Objects::nonNull).distinct().toList())
-                .stream().collect(Collectors.toMap(SysAdmin::getId, item -> item));
+        List<Long> adminIds = records.stream()
+                .map(ReturnRecord::getProcessedBy)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        Map<Long, SysAdmin> adminMap = adminIds.isEmpty()
+                ? Collections.emptyMap()
+                : sysAdminMapper.selectBatchIds(adminIds).stream().collect(Collectors.toMap(SysAdmin::getId, item -> item));
         return records.stream().map(item -> toVO(item, orderMap, carMap, userMap, regionMap, adminMap)).collect(Collectors.toList());
     }
 

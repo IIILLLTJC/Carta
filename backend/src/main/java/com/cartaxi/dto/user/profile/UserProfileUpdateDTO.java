@@ -8,15 +8,15 @@ import lombok.Data;
 @Data
 public class UserProfileUpdateDTO {
 
-    @NotBlank(message = "??????")
+    @NotBlank(message = "请输入真实姓名")
     private String realName;
 
-    @NotBlank(message = "???????")
-    @Pattern(regexp = "^1\\d{10}$", message = "????????")
+    @NotBlank(message = "请输入手机号")
+    @Pattern(regexp = "^1\\d{10}$", message = "请输入正确的手机号")
     private String phone;
 
-    @NotBlank(message = "??????")
-    @Email(message = "???????")
+    @NotBlank(message = "请输入邮箱")
+    @Email(message = "请输入正确的邮箱地址")
     private String email;
 
     private String idCard;

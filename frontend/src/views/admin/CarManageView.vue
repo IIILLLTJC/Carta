@@ -40,6 +40,21 @@
       <el-table v-loading="loading" :data="tableData" border class="crud-table">
         <el-table-column prop="carCode" label="车辆编号" min-width="120" />
         <el-table-column prop="licensePlate" label="车牌号" min-width="120" />
+        <el-table-column label="车辆图片" width="132">
+          <template #default="scope">
+            <div class="car-image-cell">
+              <el-image
+                v-if="scope.row.imageUrl"
+                :src="scope.row.imageUrl"
+                :preview-src-list="[scope.row.imageUrl]"
+                preview-teleported
+                fit="cover"
+                class="car-image-thumb"
+              />
+              <span v-else class="table-secondary">暂无图片</span>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column label="车辆信息" min-width="220">
           <template #default="scope">
             <div>{{ scope.row.brand }} {{ scope.row.model }}</div>
@@ -136,6 +151,28 @@
           <el-form-item label="电量">
             <el-input-number v-model="form.batteryLevel" :min="0" :max="100" controls-position="right" style="width: 100%" />
           </el-form-item>
+          <el-form-item label="车辆图片" class="full-row">
+            <div class="upload-panel car-upload-panel">
+              <div class="upload-action-row">
+                <el-upload :show-file-list="false" accept="image/*" :http-request="handleCarImageUpload">
+                  <el-button type="primary" plain :loading="imageUploading">本地上传车辆图片</el-button>
+                </el-upload>
+                <span class="upload-hint">{{ carUploadHint }}</span>
+              </div>
+              <div class="car-form-image-wrap">
+                <el-image
+                  v-if="form.imageUrl"
+                  :src="form.imageUrl"
+                  :preview-src-list="[form.imageUrl]"
+                  preview-teleported
+                  fit="cover"
+                  class="car-form-image"
+                />
+                <div v-else class="car-form-image car-form-image--empty">暂无图片</div>
+              </div>
+              <el-input v-model="form.imageUrl" readonly placeholder="上传后自动生成图片地址" />
+            </div>
+          </el-form-item>
           <el-form-item label="备注" class="full-row">
             <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="请输入备注" />
           </el-form-item>
@@ -154,6 +191,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { createCar, deleteCar, fetchCarDetail, fetchCarPage, updateCar, updateCarStatus } from '@/api/car'
 import { fetchRegionOptions } from '@/api/region'
+import { uploadImage } from '@/api/upload'
 
 const carStatusOptions = [
   { label: '空闲', value: 'IDLE' },
@@ -166,6 +204,8 @@ const carStatusOptions = [
 
 const loading = ref(false)
 const submitting = ref(false)
+const imageUploading = ref(false)
+const carUploadHint = '\u652f\u6301 JPG / PNG / GIF / WEBP\uff0c\u6700\u5927\u652f\u6301 10MB\uff0c\u4e0a\u4f20\u540e\u81ea\u52a8\u56de\u586b\u56fe\u7247\u5730\u5740'
 const formRef = ref()
 const tableData = ref([])
 const regionOptions = ref([])
@@ -214,6 +254,7 @@ function createDefaultForm() {
     status: 'IDLE',
     mileage: 0,
     batteryLevel: null,
+    imageUrl: '',
     remark: ''
   }
 }
@@ -299,11 +340,35 @@ async function openEdit(id) {
       status: data.status,
       mileage: Number(data.mileage ?? 0),
       batteryLevel: data.batteryLevel,
+      imageUrl: data.imageUrl || '',
       remark: data.remark || ''
     })
     formRef.value?.clearValidate()
   } catch (error) {
     ElMessage.error(error.message || '车辆详情加载失败')
+  }
+}
+
+function resolveUploadErrorMessage(error, fallbackMessage) {
+  const message = error?.message || ''
+  if (/maximum upload size exceeded|\u6587\u4ef6\u8fc7\u5927|\u4e0d\u80fd\u8d85\u8fc7\s*10\s*mb|\u4e0d\u80fd\u8d85\u8fc7\s*5\s*mb/i.test(message)) {
+    return '\u4e0a\u4f20\u5931\u8d25\uff1a\u6587\u4ef6\u8fc7\u5927\uff0c\u6700\u5927\u652f\u6301 10MB'
+  }
+  return message || fallbackMessage
+}
+
+async function handleCarImageUpload(option) {
+  imageUploading.value = true
+  try {
+    const { data } = await uploadImage(option.file, 'car')
+    form.imageUrl = data?.url || ''
+    option.onSuccess?.(data)
+    ElMessage.success('车辆图片上传成功')
+  } catch (error) {
+    option.onError?.(error)
+    ElMessage.error(resolveUploadErrorMessage(error, '\u8f66\u8f86\u56fe\u7247\u4e0a\u4f20\u5931\u8d25'))
+  } finally {
+    imageUploading.value = false
   }
 }
 

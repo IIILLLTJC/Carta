@@ -27,6 +27,7 @@ public class CarInfo {
     private String status;
     private BigDecimal mileage;
     private Integer batteryLevel;
+    private String imageUrl;
     private String remark;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;

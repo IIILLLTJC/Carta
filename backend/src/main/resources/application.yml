@@ -1,6 +1,10 @@
 spring:
   application:
     name: cartaxi-backend
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: ${MYSQL_URL:jdbc:mysql://localhost:3306/cartaxi?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
@@ -29,3 +33,5 @@ cartaxi:
     secret: ${JWT_SECRET:cartaxi-demo-secret-key-change-this-in-production-2026}
     expire-seconds: ${JWT_EXPIRE_SECONDS:86400}
     issuer: ${JWT_ISSUER:cartaxi}
+  upload:
+    base-dir: ${UPLOAD_BASE_DIR:uploads}

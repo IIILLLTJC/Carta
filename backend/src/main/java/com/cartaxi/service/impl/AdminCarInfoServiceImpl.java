@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -117,6 +116,7 @@ public class AdminCarInfoServiceImpl implements AdminCarInfoService {
                 .status(carInfo.getStatus())
                 .mileage(carInfo.getMileage())
                 .batteryLevel(carInfo.getBatteryLevel())
+                .imageUrl(carInfo.getImageUrl())
                 .remark(carInfo.getRemark())
                 .createTime(carInfo.getCreateTime())
                 .updateTime(carInfo.getUpdateTime())

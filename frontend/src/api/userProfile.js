@@ -1,16 +1,9 @@
-import request from '../utils/request'
+import request from '@/utils/request'
 
 export function fetchUserProfile() {
-  return request({
-    url: '/user/profile',
-    method: 'get',
-  })
+  return request.get('/api/user/profile')
 }
 
 export function updateUserProfile(data) {
-  return request({
-    url: '/user/profile',
-    method: 'put',
-    data,
-  })
+  return request.put('/api/user/profile', data)
 }

@@ -14,5 +14,7 @@ public interface UserOrderService {
 
     void create(UserOrderCreateDTO createDTO);
 
+    void mockPay(Long id);
+
     UserOrderFormOptionsVO formOptions();
 }

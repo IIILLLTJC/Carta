@@ -15,3 +15,7 @@ export function fetchUserOrderFormOptions() {
 export function createUserOrder(data) {
   return request.post('/api/user/orders', data)
 }
+
+export function mockPayUserOrder(id) {
+  return request.post(`/api/user/orders/${id}/pay`)
+}

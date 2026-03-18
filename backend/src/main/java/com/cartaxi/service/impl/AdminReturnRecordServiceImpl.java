@@ -25,6 +25,10 @@ import com.cartaxi.vo.admin.returnrecord.ReturnOrderOptionVO;
 import com.cartaxi.vo.admin.returnrecord.ReturnRecordFormOptionsVO;
 import com.cartaxi.vo.admin.returnrecord.ReturnRecordVO;
 import com.cartaxi.vo.common.PageResult;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -214,8 +218,15 @@ public class AdminReturnRecordServiceImpl implements AdminReturnRecordService {
             return;
         }
 
+        LocalDateTime actualReturnTime = resolveActualReturnTime(record, order);
+        record.setReturnTime(actualReturnTime);
+        record.setDamageCost(normalizeAmount(record.getDamageCost()));
+        record.setLateFee(calculateLateFee(order, car, actualReturnTime));
+        record.setFinalAmount(calculateFinalAmount(order, record));
+        returnRecordMapper.updateById(record);
+
         order.setReturnRegionId(record.getReturnRegionId());
-        order.setActualReturnTime(record.getReturnTime());
+        order.setActualReturnTime(actualReturnTime);
         switch (record.getStatus()) {
             case "PENDING", "CONFIRMED" -> {
                 order.setOrderStatus("RETURNING");
@@ -231,6 +242,62 @@ public class AdminReturnRecordServiceImpl implements AdminReturnRecordService {
         }
         rentalOrderMapper.updateById(order);
         carInfoMapper.updateById(car);
+    }
+
+    private LocalDateTime resolveActualReturnTime(ReturnRecord record, RentalOrder order) {
+        if (record.getReturnTime() != null) {
+            return record.getReturnTime();
+        }
+        if (order.getActualReturnTime() != null) {
+            return order.getActualReturnTime();
+        }
+        if (record.getCreateTime() != null) {
+            return record.getCreateTime();
+        }
+        return LocalDateTime.now();
+    }
+
+    private BigDecimal calculateLateFee(RentalOrder order, CarInfo car, LocalDateTime actualReturnTime) {
+        if (order.getExpectedReturnTime() == null || actualReturnTime == null || !actualReturnTime.isAfter(order.getExpectedReturnTime())) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal dailyRent = resolveDailyRent(order, car);
+        if (dailyRent.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO;
+        }
+        long overdueDays = calculateChargeableDays(order.getExpectedReturnTime(), actualReturnTime, false);
+        return dailyRent.multiply(BigDecimal.valueOf(overdueDays));
+    }
+
+    private BigDecimal calculateFinalAmount(RentalOrder order, ReturnRecord record) {
+        return normalizeAmount(order.getOrderAmount())
+                .add(normalizeAmount(record.getLateFee()))
+                .add(normalizeAmount(record.getDamageCost()));
+    }
+
+    private BigDecimal resolveDailyRent(RentalOrder order, CarInfo car) {
+        long baseDays = calculateChargeableDays(order.getStartTime(), order.getExpectedReturnTime(), true);
+        if (baseDays > 0 && normalizeAmount(order.getOrderAmount()).compareTo(BigDecimal.ZERO) > 0) {
+            return normalizeAmount(order.getOrderAmount())
+                    .divide(BigDecimal.valueOf(baseDays), 2, RoundingMode.HALF_UP);
+        }
+        return car == null ? BigDecimal.ZERO : normalizeAmount(car.getDailyRent());
+    }
+
+    private long calculateChargeableDays(LocalDateTime startTime, LocalDateTime endTime, boolean minimumOneDay) {
+        if (startTime == null || endTime == null || !endTime.isAfter(startTime)) {
+            return minimumOneDay ? 1L : 0L;
+        }
+        long minutes = Duration.between(startTime, endTime).toMinutes();
+        long days = (minutes + 24L * 60L - 1L) / (24L * 60L);
+        if (minimumOneDay) {
+            return Math.max(1L, days);
+        }
+        return Math.max(0L, days);
+    }
+
+    private BigDecimal normalizeAmount(BigDecimal value) {
+        return value == null ? BigDecimal.ZERO : value;
     }
 
     private boolean hasConfirmedVehicleException(String vehicleCondition) {
@@ -340,11 +407,15 @@ public class AdminReturnRecordServiceImpl implements AdminReturnRecordService {
                 .returnRegionName(region == null ? null : region.getRegionName())
                 .status(record.getStatus())
                 .vehicleCondition(record.getVehicleCondition())
+                .orderAmount(order == null ? null : order.getOrderAmount())
+                .depositAmount(order == null ? null : order.getDepositAmount())
                 .damageCost(record.getDamageCost())
                 .lateFee(record.getLateFee())
                 .finalAmount(record.getFinalAmount())
                 .processedBy(record.getProcessedBy())
                 .processedByName(admin == null ? null : (StringUtils.hasText(admin.getRealName()) ? admin.getRealName() : admin.getUsername()))
+                .expectedReturnTime(order == null ? null : order.getExpectedReturnTime())
+                .actualReturnTime(order == null ? record.getReturnTime() : order.getActualReturnTime())
                 .returnTime(record.getReturnTime())
                 .createTime(record.getCreateTime())
                 .updateTime(record.getUpdateTime())

@@ -29,11 +29,15 @@ public class ReturnRecordVO {
     private String returnRegionName;
     private String status;
     private String vehicleCondition;
+    private BigDecimal orderAmount;
+    private BigDecimal depositAmount;
     private BigDecimal damageCost;
     private BigDecimal lateFee;
     private BigDecimal finalAmount;
     private Long processedBy;
     private String processedByName;
+    private LocalDateTime expectedReturnTime;
+    private LocalDateTime actualReturnTime;
     private LocalDateTime returnTime;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;

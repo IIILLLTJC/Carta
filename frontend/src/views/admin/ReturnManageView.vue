@@ -4,73 +4,79 @@
       <div class="crud-card__header">
         <div>
           <p class="page-kicker">Return Management</p>
-          <h3>归还管理</h3>
+          <h3>{{ ui.pageTitle }}</h3>
         </div>
-        <el-button type="primary" @click="openCreate">新增归还记录</el-button>
+        <el-button type="primary" @click="openCreate">{{ ui.createButton }}</el-button>
       </div>
 
       <el-form :model="searchForm" inline label-width="80px" class="search-form">
-        <el-form-item label="订单号">
-          <el-input v-model="searchForm.orderNo" placeholder="请输入订单号" clearable />
+        <el-form-item :label="ui.orderNoLabel">
+          <el-input v-model="searchForm.orderNo" :placeholder="ui.orderNoPlaceholder" clearable />
         </el-form-item>
-        <el-form-item label="车辆关键字">
-          <el-input v-model="searchForm.carKeyword" placeholder="车辆编号 / 车牌号" clearable />
+        <el-form-item :label="ui.carKeywordLabel">
+          <el-input v-model="searchForm.carKeyword" :placeholder="ui.carKeywordPlaceholder" clearable />
         </el-form-item>
-        <el-form-item label="用户关键字">
-          <el-input v-model="searchForm.userKeyword" placeholder="用户名 / 姓名 / 手机号" clearable />
+        <el-form-item :label="ui.userKeywordLabel">
+          <el-input v-model="searchForm.userKeyword" :placeholder="ui.userKeywordPlaceholder" clearable />
         </el-form-item>
-        <el-form-item label="归还区域">
-          <el-select v-model="searchForm.returnRegionId" placeholder="全部区域" clearable style="width: 180px">
+        <el-form-item :label="ui.returnRegionLabel">
+          <el-select v-model="searchForm.returnRegionId" :placeholder="ui.regionAllPlaceholder" clearable style="width: 180px">
             <el-option v-for="item in regionOptions" :key="item.id" :label="item.regionName" :value="item.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="searchForm.status" placeholder="全部状态" clearable style="width: 160px">
+        <el-form-item :label="ui.statusLabel">
+          <el-select v-model="searchForm.status" :placeholder="ui.statusAllPlaceholder" clearable style="width: 160px">
             <el-option v-for="item in returnStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch">查询</el-button>
-          <el-button @click="handleReset">重置</el-button>
+          <el-button type="primary" @click="handleSearch">{{ ui.searchButton }}</el-button>
+          <el-button @click="handleReset">{{ ui.resetButton }}</el-button>
         </el-form-item>
       </el-form>
     </div>
 
     <div class="crud-card table-card">
       <el-table v-loading="loading" :data="tableData" border class="crud-table">
-        <el-table-column prop="orderNo" label="订单号" min-width="180" />
-        <el-table-column label="用户信息" min-width="180">
+        <el-table-column prop="orderNo" :label="ui.orderNoLabel" min-width="180" />
+        <el-table-column :label="ui.userInfoLabel" min-width="180">
           <template #default="scope">
-            <div>{{ scope.row.username }} / {{ scope.row.realName || '未实名' }}</div>
+            <div>{{ scope.row.username }} / {{ scope.row.realName || ui.notVerified }}</div>
             <div class="table-secondary">{{ scope.row.phone || '--' }}</div>
           </template>
         </el-table-column>
-        <el-table-column label="车辆信息" min-width="220">
+        <el-table-column :label="ui.carInfoLabel" min-width="220">
           <template #default="scope">
             <div>{{ scope.row.carCode }} / {{ scope.row.licensePlate }}</div>
             <div class="table-secondary">{{ scope.row.brand }} {{ scope.row.model }}</div>
           </template>
         </el-table-column>
-        <el-table-column prop="returnRegionName" label="归还区域" min-width="140" />
-        <el-table-column label="费用结算" min-width="170">
+        <el-table-column prop="returnRegionName" :label="ui.returnRegionLabel" min-width="140" />
+        <el-table-column :label="ui.timeInfoLabel" min-width="220">
           <template #default="scope">
-            <div>结算 ￥{{ scope.row.finalAmount }}</div>
-            <div class="table-secondary">损坏 ￥{{ scope.row.damageCost }} / 逾期 ￥{{ scope.row.lateFee }}</div>
+            <div>{{ ui.expectedReturnTimeLabel }}: {{ formatDateTime(scope.row.expectedReturnTime) }}</div>
+            <div class="table-secondary">{{ ui.actualReturnTimeLabel }}: {{ formatDateTime(scope.row.actualReturnTime || scope.row.returnTime) }}</div>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="160">
+        <el-table-column :label="ui.settlementLabel" min-width="240">
+          <template #default="scope">
+            <div>{{ ui.baseRentLabel }} {{ formatMoney(scope.row.orderAmount) }} / {{ ui.depositLabel }} {{ formatMoney(scope.row.depositAmount) }}</div>
+            <div class="table-secondary">{{ ui.damageCostLabel }} {{ formatMoney(scope.row.damageCost) }} / {{ ui.lateFeeLabel }} {{ formatMoney(scope.row.lateFee) }}</div>
+            <div class="table-secondary">{{ ui.finalAmountLabel }} {{ formatMoney(scope.row.finalAmount) }}</div>
+          </template>
+        </el-table-column>
+        <el-table-column :label="ui.statusLabel" width="160">
           <template #default="scope">
             <el-select :model-value="scope.row.status" size="small" @change="(value) => handleStatusChange(scope.row, value)">
               <el-option v-for="item in returnStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </template>
         </el-table-column>
-        <el-table-column prop="processedByName" label="处理管理员" min-width="140" />
-        <el-table-column prop="returnTime" label="归还时间" min-width="180" />
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column prop="processedByName" :label="ui.processedByLabel" min-width="140" />
+        <el-table-column :label="ui.actionsLabel" width="180" fixed="right">
           <template #default="scope">
-            <el-button link type="primary" @click="openEdit(scope.row.id)">编辑</el-button>
-            <el-button link type="danger" @click="handleDelete(scope.row.id)">删除</el-button>
+            <el-button link type="primary" @click="openEdit(scope.row.id)">{{ ui.editButton }}</el-button>
+            <el-button link type="danger" @click="handleDelete(scope.row.id)">{{ ui.deleteButton }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -89,52 +95,61 @@
       </div>
     </div>
 
-    <el-dialog v-model="dialog.visible" :title="dialog.mode === 'create' ? '新增归还记录' : '编辑归还记录'" width="860px">
+    <el-dialog v-model="dialog.visible" :title="dialog.mode === 'create' ? ui.createTitle : ui.editTitle" width="860px">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
         <div class="form-grid">
-          <el-form-item label="订单" prop="rentalOrderId" class="full-row">
-            <el-select v-model="form.rentalOrderId" placeholder="请选择订单" filterable style="width: 100%">
+          <el-form-item :label="ui.orderLabel" prop="rentalOrderId" class="full-row">
+            <el-select v-model="form.rentalOrderId" :placeholder="ui.orderSelectPlaceholder" filterable style="width: 100%">
               <el-option v-for="item in orderOptions" :key="item.id" :label="item.displayName" :value="item.id" />
             </el-select>
           </el-form-item>
-          <el-form-item label="归还区域" prop="returnRegionId">
-            <el-select v-model="form.returnRegionId" placeholder="请选择归还区域" style="width: 100%">
+          <el-form-item :label="ui.returnRegionLabel" prop="returnRegionId">
+            <el-select v-model="form.returnRegionId" :placeholder="ui.returnRegionPlaceholder" style="width: 100%">
               <el-option v-for="item in regionOptions" :key="item.id" :label="item.regionName" :value="item.id" />
             </el-select>
           </el-form-item>
-          <el-form-item label="处理管理员">
-            <el-select v-model="form.processedBy" placeholder="请选择管理员" clearable style="width: 100%">
+          <el-form-item :label="ui.processedByLabel">
+            <el-select v-model="form.processedBy" :placeholder="ui.processedByPlaceholder" clearable style="width: 100%">
               <el-option v-for="item in adminOptions" :key="item.id" :label="(item.realName || item.username) + ' / ' + item.username" :value="item.id" />
             </el-select>
           </el-form-item>
-          <el-form-item label="归还时间" prop="returnTime">
-            <el-date-picker v-model="form.returnTime" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" placeholder="请选择归还时间" style="width: 100%" />
+          <el-form-item :label="ui.actualReturnTimeLabel" prop="returnTime">
+            <el-date-picker v-model="form.returnTime" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" :placeholder="ui.returnTimePlaceholder" style="width: 100%" />
           </el-form-item>
-          <el-form-item label="归还状态" prop="status">
-            <el-select v-model="form.status" placeholder="请选择归还状态" style="width: 100%">
+          <el-form-item :label="ui.statusLabel" prop="status">
+            <el-select v-model="form.status" :placeholder="ui.statusPlaceholder" style="width: 100%">
               <el-option v-for="item in returnStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </el-form-item>
-          <el-form-item label="验车结论" class="full-row">
-            <el-input v-model="form.vehicleCondition" placeholder="正常完成可填写“无明显异常”；异常完成请填写“验车确认：xxx异常/需维修”" />
+          <el-form-item :label="ui.vehicleCheckLabel" class="full-row">
+            <el-input v-model="form.vehicleCondition" :placeholder="ui.vehicleCheckPlaceholder" />
           </el-form-item>
-          <el-form-item label="损坏费用" prop="damageCost">
+          <el-form-item :label="ui.damageCostLabel" prop="damageCost">
             <el-input-number v-model="form.damageCost" :min="0" :precision="2" controls-position="right" style="width: 100%" />
           </el-form-item>
-          <el-form-item label="逾期费用" prop="lateFee">
-            <el-input-number v-model="form.lateFee" :min="0" :precision="2" controls-position="right" style="width: 100%" />
+          <el-form-item :label="ui.lateFeeLabel">
+            <el-input :model-value="formatMoney(form.lateFee)" readonly />
           </el-form-item>
-          <el-form-item label="结算金额" prop="finalAmount">
-            <el-input-number v-model="form.finalAmount" :min="0" :precision="2" controls-position="right" style="width: 100%" />
+          <el-form-item :label="ui.finalAmountLabel">
+            <el-input :model-value="formatMoney(form.finalAmount)" readonly />
           </el-form-item>
-          <el-form-item label="备注" class="full-row">
-            <el-input v-model="form.remark" type="textarea" :rows="3" placeholder="请输入备注" />
+          <el-form-item :label="ui.settlementInfoLabel" class="full-row">
+            <div class="dialog-tip settlement-tip">
+              <div>{{ ui.baseRentLabel }}: {{ formatMoney(form.orderAmount) }}</div>
+              <div>{{ ui.depositLabel }}: {{ formatMoney(form.depositAmount) }}</div>
+              <div>{{ ui.expectedReturnTimeLabel }}: {{ formatDateTime(form.expectedReturnTime) }}</div>
+              <div>{{ ui.actualReturnTimeLabel }}: {{ formatDateTime(form.returnTime || form.actualReturnTime) }}</div>
+              <div class="table-secondary">{{ ui.autoCalcTip }}</div>
+            </div>
+          </el-form-item>
+          <el-form-item :label="ui.remarkLabel" class="full-row">
+            <el-input v-model="form.remark" type="textarea" :rows="3" :placeholder="ui.remarkPlaceholder" />
           </el-form-item>
         </div>
       </el-form>
       <template #footer>
-        <el-button @click="dialog.visible = false">取消</el-button>
-        <el-button type="primary" :loading="submitting" @click="handleSubmit">保存</el-button>
+        <el-button @click="dialog.visible = false">{{ ui.cancelButton }}</el-button>
+        <el-button type="primary" :loading="submitting" @click="handleSubmit">{{ ui.saveButton }}</el-button>
       </template>
     </el-dialog>
   </section>
@@ -144,6 +159,55 @@
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { createReturn, deleteReturn, fetchReturnDetail, fetchReturnFormOptions, fetchReturnPage, updateReturn, updateReturnStatus } from '@/api/returnRecord'
+
+const ui = {
+  pageTitle: '归还管理',
+  createButton: '新增归还记录',
+  orderNoLabel: '订单号',
+  orderNoPlaceholder: '请输入订单号',
+  carKeywordLabel: '车辆关键字',
+  carKeywordPlaceholder: '车辆编号 / 车牌号',
+  userKeywordLabel: '用户关键字',
+  userKeywordPlaceholder: '用户名 / 姓名 / 手机号',
+  returnRegionLabel: '归还区域',
+  regionAllPlaceholder: '全部区域',
+  statusLabel: '状态',
+  statusAllPlaceholder: '全部状态',
+  searchButton: '查询',
+  resetButton: '重置',
+  userInfoLabel: '用户信息',
+  notVerified: '未实名',
+  carInfoLabel: '车辆信息',
+  timeInfoLabel: '时间信息',
+  expectedReturnTimeLabel: '预计归还',
+  actualReturnTimeLabel: '实际归还',
+  settlementLabel: '结算明细',
+  baseRentLabel: '订单金额',
+  depositLabel: '押金',
+  damageCostLabel: '损坏费',
+  lateFeeLabel: '逾期费',
+  finalAmountLabel: '最终结算',
+  processedByLabel: '处理管理员',
+  actionsLabel: '操作',
+  editButton: '编辑',
+  deleteButton: '删除',
+  createTitle: '新增归还记录',
+  editTitle: '编辑归还记录',
+  orderLabel: '订单',
+  orderSelectPlaceholder: '请选择订单',
+  processedByPlaceholder: '请选择管理员',
+  returnRegionPlaceholder: '请选择归还区域',
+  returnTimePlaceholder: '请选择归还时间',
+  statusPlaceholder: '请选择归还状态',
+  vehicleCheckLabel: '验车结论',
+  vehicleCheckPlaceholder: '正常完成可填写“无明显异常”；异常完成请填写“验车确认：xxx异常/需维修”',
+  settlementInfoLabel: '结算信息',
+  autoCalcTip: '逾期费与最终结算金额由系统按预计归还时间、实际归还时间和损坏费自动计算',
+  remarkLabel: '备注',
+  remarkPlaceholder: '请输入备注',
+  cancelButton: '取消',
+  saveButton: '保存'
+}
 
 const returnStatusOptions = [
   { label: '待确认', value: 'PENDING' },
@@ -169,9 +233,7 @@ const rules = {
   returnRegionId: [{ required: true, message: '请选择归还区域', trigger: 'change' }],
   returnTime: [{ required: true, message: '请选择归还时间', trigger: 'change' }],
   status: [{ required: true, message: '请选择归还状态', trigger: 'change' }],
-  damageCost: [{ required: true, message: '请输入损坏费用', trigger: 'change' }],
-  lateFee: [{ required: true, message: '请输入逾期费用', trigger: 'change' }],
-  finalAmount: [{ required: true, message: '请输入结算金额', trigger: 'change' }]
+  damageCost: [{ required: true, message: '请输入损坏费用', trigger: 'change' }]
 }
 
 function createDefaultForm() {
@@ -183,13 +245,19 @@ function createDefaultForm() {
     damageCost: 0,
     lateFee: 0,
     finalAmount: 0,
+    orderAmount: 0,
+    depositAmount: 0,
+    expectedReturnTime: '',
+    actualReturnTime: '',
     processedBy: null,
     returnTime: '',
     remark: ''
   }
 }
 
-function resetForm() { Object.assign(form, createDefaultForm()) }
+function resetForm() {
+  Object.assign(form, createDefaultForm())
+}
 
 async function loadFormOptions() {
   try {
@@ -215,13 +283,22 @@ async function loadData() {
   }
 }
 
-function handleSearch() { pagination.pageNum = 1; loadData() }
+function handleSearch() {
+  pagination.pageNum = 1
+  loadData()
+}
+
 function handleReset() {
   Object.assign(searchForm, { orderNo: '', carKeyword: '', userKeyword: '', returnRegionId: undefined, status: '' })
   pagination.pageNum = 1
   loadData()
 }
-function handleSizeChange(size) { pagination.pageSize = size; pagination.pageNum = 1; loadData() }
+
+function handleSizeChange(size) {
+  pagination.pageSize = size
+  pagination.pageNum = 1
+  loadData()
+}
 
 function openCreate() {
   dialog.visible = true
@@ -245,6 +322,10 @@ async function openEdit(id) {
       damageCost: Number(data.damageCost ?? 0),
       lateFee: Number(data.lateFee ?? 0),
       finalAmount: Number(data.finalAmount ?? 0),
+      orderAmount: Number(data.orderAmount ?? 0),
+      depositAmount: Number(data.depositAmount ?? 0),
+      expectedReturnTime: normalizeDateTime(data.expectedReturnTime),
+      actualReturnTime: normalizeDateTime(data.actualReturnTime || data.returnTime),
       processedBy: data.processedBy,
       returnTime: normalizeDateTime(data.returnTime),
       remark: data.remark || ''
@@ -255,19 +336,35 @@ async function openEdit(id) {
   }
 }
 
+function buildPayload() {
+  return {
+    rentalOrderId: form.rentalOrderId,
+    returnRegionId: form.returnRegionId,
+    status: form.status,
+    vehicleCondition: form.vehicleCondition,
+    damageCost: Number(form.damageCost ?? 0),
+    lateFee: Number(form.lateFee ?? 0),
+    finalAmount: Number(form.finalAmount ?? 0),
+    processedBy: form.processedBy,
+    returnTime: form.returnTime,
+    remark: form.remark
+  }
+}
+
 async function handleSubmit() {
   await formRef.value.validate()
   submitting.value = true
   try {
+    const payload = buildPayload()
     if (dialog.mode === 'create') {
-      await createReturn(form)
+      await createReturn(payload)
       ElMessage.success('归还记录新增成功')
     } else {
-      await updateReturn(dialog.id, form)
+      await updateReturn(dialog.id, payload)
       ElMessage.success('归还记录修改成功')
     }
     dialog.visible = false
-    loadData()
+    await loadData()
   } catch (error) {
     ElMessage.error(error.message || '保存失败')
   } finally {
@@ -297,6 +394,7 @@ async function handleStatusChange(row, value) {
   try {
     await updateReturnStatus(row.id, value)
     ElMessage.success('归还状态已更新')
+    await loadData()
   } catch (error) {
     row.status = previous
     ElMessage.error(error.message || '状态更新失败')
@@ -305,6 +403,17 @@ async function handleStatusChange(row, value) {
 
 function normalizeDateTime(value) {
   return value ? String(value).replace('T', ' ').slice(0, 19) : ''
+}
+
+function formatDateTime(value) {
+  return value ? String(value).replace('T', ' ').slice(0, 19) : '-'
+}
+
+function formatMoney(value) {
+  if (value === null || value === undefined || value === '') {
+    return '￥0.00'
+  }
+  return `￥${Number(value).toFixed(2)}`
 }
 
 onMounted(async () => {

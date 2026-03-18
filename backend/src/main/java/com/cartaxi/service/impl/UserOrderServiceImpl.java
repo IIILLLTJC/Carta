@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -37,6 +38,7 @@ import org.springframework.util.StringUtils;
 public class UserOrderServiceImpl implements UserOrderService {
 
     private static final DateTimeFormatter ORDER_NO_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+    private static final Set<String> ACTIVE_ORDER_STATUSES = Set.of("CREATED", "PAID", "USING", "RETURNING");
 
     private final RentalOrderMapper rentalOrderMapper;
     private final CarInfoMapper carInfoMapper;
@@ -77,22 +79,23 @@ public class UserOrderServiceImpl implements UserOrderService {
         Long userId = currentUserId();
         SysUser user = sysUserMapper.selectById(userId);
         if (user == null) {
-            throw new BusinessException(404, "当前用户不存在");
+            throw new BusinessException(404, "\u5f53\u524d\u7528\u6237\u4e0d\u5b58\u5728");
         }
         CarInfo car = carInfoMapper.selectById(createDTO.getCarId());
         if (car == null) {
-            throw new BusinessException(404, "车辆不存在");
+            throw new BusinessException(404, "\u8f66\u8f86\u4e0d\u5b58\u5728");
         }
         if (!"DEPLOYED".equals(car.getStatus()) || car.getCurrentRegionId() == null) {
-            throw new BusinessException(400, "当前车辆不可下单");
+            throw new BusinessException(400, "\u5f53\u524d\u8f66\u8f86\u4e0d\u53ef\u4e0b\u5355");
         }
+        ensureCarOrderable(car.getId(), null);
         if (createDTO.getReturnRegionId() != null && regionMapper.selectById(createDTO.getReturnRegionId()) == null) {
-            throw new BusinessException(400, "归还区域不存在");
+            throw new BusinessException(400, "\u5f52\u8fd8\u533a\u57df\u4e0d\u5b58\u5728");
         }
         LocalDateTime startTime = LocalDateTime.now();
-        LocalDateTime expectedReturnTime = DateTimeUtil.parseDateTime(createDTO.getExpectedReturnTime(), "预计归还时间");
+        LocalDateTime expectedReturnTime = DateTimeUtil.parseDateTime(createDTO.getExpectedReturnTime(), "\u9884\u8ba1\u5f52\u8fd8\u65f6\u95f4");
         if (!expectedReturnTime.isAfter(startTime)) {
-            throw new BusinessException(400, "预计归还时间必须晚于当前时间");
+            throw new BusinessException(400, "\u9884\u8ba1\u5f52\u8fd8\u65f6\u95f4\u5fc5\u987b\u665a\u4e8e\u5f53\u524d\u65f6\u95f4");
         }
 
         RentalOrder order = new RentalOrder();
@@ -101,12 +104,12 @@ public class UserOrderServiceImpl implements UserOrderService {
         order.setCarId(car.getId());
         order.setPickupRegionId(car.getCurrentRegionId());
         order.setReturnRegionId(createDTO.getReturnRegionId());
-        order.setOrderStatus("USING");
+        order.setOrderStatus("CREATED");
         order.setOrderAmount(calculateOrderAmount(car.getDailyRent(), startTime, expectedReturnTime));
         order.setDepositAmount(car.getDeposit());
         order.setStartTime(startTime);
         order.setExpectedReturnTime(expectedReturnTime);
-        order.setPaymentStatus("PAID");
+        order.setPaymentStatus("UNPAID");
         order.setRemark(createDTO.getRemark());
         rentalOrderMapper.insert(order);
 
@@ -115,11 +118,48 @@ public class UserOrderServiceImpl implements UserOrderService {
     }
 
     @Override
+    public void mockPay(Long id) {
+        RentalOrder order = getCurrentUserOrder(id);
+        if (!"CREATED".equals(order.getOrderStatus()) || !"UNPAID".equals(order.getPaymentStatus())) {
+            throw new BusinessException(400, "\u5f53\u524d\u8ba2\u5355\u4e0d\u652f\u6301\u6a21\u62df\u652f\u4ed8");
+        }
+        CarInfo car = carInfoMapper.selectById(order.getCarId());
+        if (car == null) {
+            throw new BusinessException(404, "\u8f66\u8f86\u4e0d\u5b58\u5728");
+        }
+        if (!Set.of("DEPLOYED", "RENTING").contains(car.getStatus())) {
+            throw new BusinessException(400, "\u5f53\u524d\u8f66\u8f86\u72b6\u6001\u4e0d\u5141\u8bb8\u652f\u4ed8");
+        }
+        ensureCarOrderable(order.getCarId(), order.getId());
+
+        order.setPaymentStatus("PAID");
+        order.setOrderStatus("USING");
+        rentalOrderMapper.updateById(order);
+
+        car.setStatus("RENTING");
+        carInfoMapper.updateById(car);
+    }
+
+    @Override
     public UserOrderFormOptionsVO formOptions() {
-        List<CarSimpleOptionVO> cars = carInfoMapper.selectList(new LambdaQueryWrapper<CarInfo>()
-                        .eq(CarInfo::getStatus, "DEPLOYED")
-                        .isNotNull(CarInfo::getCurrentRegionId)
-                        .orderByAsc(CarInfo::getCarCode))
+        List<Long> reservedCarIds = rentalOrderMapper.selectList(new LambdaQueryWrapper<RentalOrder>()
+                        .select(RentalOrder::getCarId)
+                        .in(RentalOrder::getOrderStatus, ACTIVE_ORDER_STATUSES))
+                .stream()
+                .map(RentalOrder::getCarId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        LambdaQueryWrapper<CarInfo> carWrapper = new LambdaQueryWrapper<CarInfo>()
+                .eq(CarInfo::getStatus, "DEPLOYED")
+                .isNotNull(CarInfo::getCurrentRegionId)
+                .orderByAsc(CarInfo::getCarCode);
+        if (!reservedCarIds.isEmpty()) {
+            carWrapper.notIn(CarInfo::getId, reservedCarIds);
+        }
+
+        List<CarSimpleOptionVO> cars = carInfoMapper.selectList(carWrapper)
                 .stream()
                 .map(item -> new CarSimpleOptionVO(
                         item.getId(),
@@ -139,7 +179,7 @@ public class UserOrderServiceImpl implements UserOrderService {
 
     private Long currentUserId() {
         if (UserContext.get() == null) {
-            throw new BusinessException(401, "当前用户未登录");
+            throw new BusinessException(401, "\u5f53\u524d\u7528\u6237\u672a\u767b\u5f55");
         }
         return UserContext.get().getUserId();
     }
@@ -147,9 +187,22 @@ public class UserOrderServiceImpl implements UserOrderService {
     private RentalOrder getCurrentUserOrder(Long id) {
         RentalOrder order = rentalOrderMapper.selectById(id);
         if (order == null || !Objects.equals(order.getUserId(), currentUserId())) {
-            throw new BusinessException(404, "订单不存在");
+            throw new BusinessException(404, "\u8ba2\u5355\u4e0d\u5b58\u5728");
         }
         return order;
+    }
+
+    private void ensureCarOrderable(Long carId, Long excludeOrderId) {
+        LambdaQueryWrapper<RentalOrder> wrapper = new LambdaQueryWrapper<RentalOrder>()
+                .eq(RentalOrder::getCarId, carId)
+                .in(RentalOrder::getOrderStatus, ACTIVE_ORDER_STATUSES);
+        if (excludeOrderId != null) {
+            wrapper.ne(RentalOrder::getId, excludeOrderId);
+        }
+        Long activeOrderCount = rentalOrderMapper.selectCount(wrapper);
+        if (activeOrderCount != null && activeOrderCount > 0) {
+            throw new BusinessException(409, "\u5f53\u524d\u8f66\u8f86\u5df2\u6709\u5f85\u5904\u7406\u8ba2\u5355");
+        }
     }
 
     private List<UserOrderVO> enrich(List<RentalOrder> orders) {

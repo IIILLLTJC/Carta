@@ -21,9 +21,13 @@ public class UserReturnVO {
     private String returnRegionName;
     private String status;
     private String vehicleCondition;
+    private BigDecimal orderAmount;
+    private BigDecimal depositAmount;
     private BigDecimal damageCost;
     private BigDecimal lateFee;
     private BigDecimal finalAmount;
+    private LocalDateTime expectedReturnTime;
+    private LocalDateTime actualReturnTime;
     private LocalDateTime returnTime;
     private LocalDateTime createTime;
     private String remark;

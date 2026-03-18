@@ -29,22 +29,28 @@ public class UserOrderController {
 
     @GetMapping
     public ApiResponse<PageResult<UserOrderVO>> page(UserOrderQueryDTO queryDTO) {
-        return ApiResponse.success("查询成功", userOrderService.page(queryDTO));
+        return ApiResponse.success("\u67e5\u8be2\u6210\u529f", userOrderService.page(queryDTO));
     }
 
     @GetMapping("/form-options")
     public ApiResponse<UserOrderFormOptionsVO> formOptions() {
-        return ApiResponse.success("查询成功", userOrderService.formOptions());
+        return ApiResponse.success("\u67e5\u8be2\u6210\u529f", userOrderService.formOptions());
     }
 
     @GetMapping("/{id}")
     public ApiResponse<UserOrderVO> detail(@PathVariable Long id) {
-        return ApiResponse.success("查询成功", userOrderService.detail(id));
+        return ApiResponse.success("\u67e5\u8be2\u6210\u529f", userOrderService.detail(id));
     }
 
     @PostMapping
     public ApiResponse<Void> create(@Valid @RequestBody UserOrderCreateDTO createDTO) {
         userOrderService.create(createDTO);
-        return ApiResponse.success("下单成功", null);
+        return ApiResponse.success("\u4e0b\u5355\u6210\u529f", null);
+    }
+
+    @PostMapping("/{id}/pay")
+    public ApiResponse<Void> mockPay(@PathVariable Long id) {
+        userOrderService.mockPay(id);
+        return ApiResponse.success("\u652f\u4ed8\u6210\u529f", null);
     }
 }

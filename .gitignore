@@ -17,3 +17,5 @@ backend/.mvn/
 
 # Logs
 *.log
+
+backend/uploads/

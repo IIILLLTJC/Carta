@@ -53,6 +53,9 @@ public class CarInfoSaveDTO {
 
     private Integer batteryLevel;
 
+    @Size(max = 255, message = "车辆图片地址长度不能超过255")
+    private String imageUrl;
+
     @Size(max = 255, message = "备注长度不能超过255")
     private String remark;
 }
